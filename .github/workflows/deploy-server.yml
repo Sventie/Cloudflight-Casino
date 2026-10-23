@@ -1,0 +1,43 @@
+name: Deploy server
+
+# Deploys server/ (the Cloudflare Worker + Durable Object).
+# Required repository secrets:
+#   CLOUDFLARE_API_TOKEN  - token with "Edit Cloudflare Workers"
+#   CLOUDFLARE_ACCOUNT_ID - your Cloudflare account id
+#   DEALER_PASS           - shared password for all dealers
+#   ADMIN_PASS            - admin password
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server
+          secrets: |
+            DEALER_PASS
+            ADMIN_PASS
+        env:
+          DEALER_PASS: ${{ secrets.DEALER_PASS }}
+          ADMIN_PASS: ${{ secrets.ADMIN_PASS }}

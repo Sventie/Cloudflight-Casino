@@ -1,0 +1,21 @@
+# Cloudflare Worker for the Cloudflight Casino live state.
+# Deploy:  npm install && npx wrangler deploy
+# Dev:     npx wrangler dev   (secrets from .dev.vars)
+# Secrets: npx wrangler secret put DEALER_PASS ; npx wrangler secret put ADMIN_PASS
+# Viewing (GET /ws) is public; every write needs the dealer or admin password.
+
+name = "cloudflight-casino"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[durable_objects.bindings]]
+name = "CASINO"
+class_name = "CasinoRoom"
+
+# Free plan requires SQLite-backed Durable Object classes.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CasinoRoom"]
+
+[observability]
+enabled = true
